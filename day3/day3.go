@@ -14,7 +14,7 @@ func main() {
 }
 
 func Part2() {
-	f, err := os.Open("sample.txt")
+	f, err := os.Open("day3.txt")
 
 	if err != nil {
 		fmt.Println("Error opening file")
@@ -29,6 +29,13 @@ func Part2() {
 		lines = append(lines, scanner.Text())
 	}
 
+	o2 := getO2(lines)
+	co2 := getCO2(lines)
+
+	fmt.Println(o2, co2, o2*co2)
+}
+
+func getO2(lines []string) int64 {
 	matches := make([]string, len(lines))
 	copy(matches, lines)
 	for i := range lines[0] {
@@ -37,16 +44,44 @@ func Part2() {
 		}
 		max := getMaxNumber(matches, i)
 		fmt.Println(i, max)
+		var newMatches []string
 		for _, m := range matches {
-
+			if string(m[i]) == max {
+				newMatches = append(newMatches, m)
+			}
 		}
+		matches = newMatches
+		fmt.Println(i, matches)
 	}
+	ret, _ := strconv.ParseInt(matches[0], 2, 64)
+	return ret
+}
 
-	str := ""
-	o2, _ := strconv.ParseInt(str, 2, 64)
-	co2, _ := strconv.ParseInt(invert(str), 2, 64)
-
-	fmt.Println(matches, o2, co2, o2*co2)
+func getCO2(lines []string) int64 {
+	matches := make([]string, len(lines))
+	copy(matches, lines)
+	for i := range lines[0] {
+		if len(matches) == 1 {
+			break
+		}
+		max := getMaxNumber(matches, i)
+		if max == "0" {
+			max = "1"
+		} else {
+			max = "0"
+		}
+		fmt.Println(i, max)
+		var newMatches []string
+		for _, m := range matches {
+			if string(m[i]) == max {
+				newMatches = append(newMatches, m)
+			}
+		}
+		matches = newMatches
+		fmt.Println(i, matches)
+	}
+	ret, _ := strconv.ParseInt(matches[0], 2, 64)
+	return ret
 }
 
 func Part1() {
@@ -94,15 +129,14 @@ func getMaxNumber(lines []string, index int) string {
 	for _, line := range lines {
 
 		c := string(line[index])
-		//fmt.Println(c)
 		if c == "0" {
 			numZeros++
 		} else {
 			numOnes++
 		}
 	}
-	if numOnes > numZeros {
-		return "1"
+	if numZeros > numOnes {
+		return "0"
 	}
-	return "0"
+	return "1"
 }
