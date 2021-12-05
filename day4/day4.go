@@ -13,10 +13,13 @@ type Square struct {
 	on  bool
 }
 
-type Card [][]*Square
+type Card struct {
+	squares [][]*Square
+	won     bool
+}
 
 var moves []int
-var cards []Card
+var cards []*Card
 
 func main() {
 	fmt.Println("Day4")
@@ -44,27 +47,37 @@ func main() {
 
 	createCards(lines[2:])
 
-	fmt.Println(cards)
+	//fmt.Println(cards)
+	for i, c := range cards {
+		fmt.Println("Card", i, &c)
+		printCard(*c)
+	}
 
-	part1()
+	//part1()
+	part2()
 }
 
 func createCards(lines []string) {
 	//fmt.Println(lines)
-	var card = make(Card, 5)
+	var card = &Card{}
+	card.squares = make([][]*Square, 5)
+	card.won = false
+	fmt.Println("First card at ", &card)
 	ci := 0
-	for _, e := range lines {
+	for i, e := range lines {
 		if e == "" {
 			ci = 0
 			cards = append(cards, card)
-			card = make(Card, 5)
-			//fmt.Println("new card at ", i)
+			card = &Card{}
+			card.squares = make([][]*Square, 5)
+			card.won = false
+			fmt.Println("new card at ", i, card)
 			continue
 		}
-		//fmt.Println("A new row at ", ci, card[ci])
+		fmt.Println("A new row at ", ci, card.squares[ci])
 		for _, s := range strings.Fields(e) {
 			v, _ := strconv.Atoi(s)
-			card[ci] = append(card[ci], &Square{v, false})
+			card.squares[ci] = append(card.squares[ci], &Square{v, false})
 		}
 		//fmt.Println("A finished row at ", ci, card[ci])
 		ci++
@@ -73,16 +86,17 @@ func createCards(lines []string) {
 }
 
 func part1() {
-	var winner Card
+	var winner *Card
 	for _, m := range moves {
-		if winner != nil {
+		if winner.won {
 			break
 		}
 		for _, c := range cards {
-			makeMove(&c, m)
-			if checkIfWinner(c) {
+			makeMove(c, m)
+			if checkIfWinner(*c) {
 				winner = c
-				score := m * sumUnused(c)
+				winner.won = true
+				score := m * sumUnused(*c)
 				fmt.Println("Score", score)
 				break
 			}
@@ -93,11 +107,11 @@ func part1() {
 }
 
 func makeMove(card *Card, move int) {
-	for i, row := range *card {
+	for i, row := range card.squares {
 		for j, val := range row {
 			if val.val == move {
 				val.on = true
-				fmt.Println("Found", move, "at", i, j, card)
+				fmt.Println("Found", move, "at", i, j)
 			}
 		}
 	}
@@ -105,7 +119,7 @@ func makeMove(card *Card, move int) {
 
 func checkIfWinner(card Card) bool {
 	completeRow := true
-	for _, row := range card {
+	for _, row := range card.squares {
 		for _, val := range row {
 			//fmt.Println("Checking row", row, val)
 			if !val.on {
@@ -122,7 +136,7 @@ func checkIfWinner(card Card) bool {
 	}
 	completeCol := true
 	for j := 0; j < 5; j++ {
-		for _, row := range card {
+		for _, row := range card.squares {
 			if !row[j].on {
 				completeCol = false
 				break
@@ -140,7 +154,7 @@ func checkIfWinner(card Card) bool {
 
 func sumUnused(card Card) int {
 	sum := 0
-	for _, row := range card {
+	for _, row := range card.squares {
 		for _, val := range row {
 			if !val.on {
 				sum += val.val
@@ -151,11 +165,54 @@ func sumUnused(card Card) int {
 }
 
 func printCard(c Card) {
-	fmt.Println("Print Card")
-	for _, row := range c {
+	fmt.Println("Print Card, won:", c.won)
+	for _, row := range c.squares {
 		for _, val := range row {
 			fmt.Print(*val, " ")
 		}
 		fmt.Println()
 	}
+}
+
+func part2() {
+	var lastWinner *Card
+	for _, m := range moves {
+		if lastWinner != nil {
+			break
+		}
+		for i, c := range cards {
+			if c.won {
+				fmt.Println(i, "has already won")
+				continue
+			}
+			makeMove(c, m)
+			if checkIfWinner(*c) {
+				c.won = true
+				fmt.Println("A card has won ", c.won)
+				if checkIfLastWinner() {
+					lastWinner = c
+					score := m * sumUnused(*c)
+					fmt.Println("Score", score)
+					break
+				}
+			}
+		}
+
+	}
+	fmt.Println("Last Winner")
+	if lastWinner != nil {
+		printCard(*lastWinner)
+	}
+}
+
+func checkIfLastWinner() bool {
+	count := 0
+	for i, c := range cards {
+		fmt.Println("checkLastWinner", i, c.won, c.squares[0][0])
+		if c.won {
+			count++
+		}
+	}
+	fmt.Println("Number of winning cards", count)
+	return count == len(cards)
 }
